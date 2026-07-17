@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2142,7 +2143,7 @@ function toggleFaq(btn) {
   }
 }
 
-// ── CONTACT FORM — Resend API ──
+// ── CONTACT FORM — Web3Forms ──
 async function handleSubmit(e) {
   e.preventDefault();
   const form = e.target;
@@ -2152,59 +2153,45 @@ async function handleSubmit(e) {
   btn.disabled = true;
   btn.textContent = 'Sending...';
 
-  const htmlBody = `
-    <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:600px;margin:0 auto;color:#1E1A2E;">
-      <div style="background:#3D3455;padding:28px 32px;border-radius:4px 4px 0 0;">
-        <div style="font-size:18px;font-weight:600;color:#ffffff;letter-spacing:0.3px;">New Inquiry — Coastal Practice Medical Management</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;">Received from www.cpmmllc.com</div>
-      </div>
-      <div style="background:#F5F2FB;padding:28px 32px;border:1px solid #D4CFE0;border-top:none;">
-        <table style="width:100%;border-collapse:collapse;font-size:14px;">
-          <tr><td style="padding:8px 0;color:#8C8599;width:140px;vertical-align:top;">Name</td><td style="padding:8px 0;font-weight:500;color:#3D3455;">${d.first_name || ''} ${d.last_name || ''}</td></tr>
-          <tr><td style="padding:8px 0;color:#8C8599;border-top:1px solid #D4CFE0;vertical-align:top;">Practice / Name</td><td style="padding:8px 0;font-weight:500;color:#3D3455;border-top:1px solid #D4CFE0;">${d.practice || ''}</td></tr>
-          <tr><td style="padding:8px 0;color:#8C8599;border-top:1px solid #D4CFE0;vertical-align:top;">Email</td><td style="padding:8px 0;border-top:1px solid #D4CFE0;"><a href="mailto:${d.email || ''}" style="color:#7C6FA0;">${d.email || ''}</a></td></tr>
-          <tr><td style="padding:8px 0;color:#8C8599;border-top:1px solid #D4CFE0;vertical-align:top;">Phone</td><td style="padding:8px 0;color:#3D3455;border-top:1px solid #D4CFE0;">${d.phone || '—'}</td></tr>
-          <tr><td style="padding:8px 0;color:#8C8599;border-top:1px solid #D4CFE0;vertical-align:top;">State</td><td style="padding:8px 0;color:#3D3455;border-top:1px solid #D4CFE0;">${d.state || '—'}</td></tr>
-          <tr><td style="padding:8px 0;color:#8C8599;border-top:1px solid #D4CFE0;vertical-align:top;">Inquiry Type</td><td style="padding:8px 0;font-weight:600;color:#7C6FA0;border-top:1px solid #D4CFE0;">${d.service || '—'}</td></tr>
-        </table>
-        ${d.message ? `<div style="margin-top:20px;padding:16px 20px;background:#ffffff;border:1px solid #D4CFE0;border-radius:4px;"><div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8C8599;margin-bottom:8px;">Message</div><div style="font-size:14px;color:#4A4558;line-height:1.7;">${d.message.replace(/\n/g,'<br>')}</div></div>` : ''}
-      </div>
-      <div style="padding:16px 32px;background:#3D3455;border-radius:0 0 4px 4px;font-size:12px;color:rgba(255,255,255,0.4);text-align:center;">
-        Coastal Practice Medical Management · a dba of Raven Tide Holdings, LLC · www.cpmmllc.com
-      </div>
-    </div>
-  `;
+  const payload = {
+    access_key: 'a6647009-5dd1-4865-94a5-962589d35f4e',
+    subject: 'New Inquiry — ' + (d.service || 'CPMM Website') + ' · ' + (d.practice || d.first_name || 'New Contact'),
+    from_name: 'CPMM Website',
+    replyto: d.email || '',
+    'Name': ((d.first_name || '') + ' ' + (d.last_name || '')).trim(),
+    'Practice / Organization': d.practice || '',
+    'Email': d.email || '',
+    'Phone': d.phone || '',
+    'State': d.state || '',
+    'Inquiry Type': d.service || '',
+    'Message': d.message || ''
+  };
 
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.web3forms.com/submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer re_J9yZbGbz_4xUFA5Jp2DwqC9BHsrqCyiUm'
+        'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        from: 'CPMM Website <onboarding@resend.dev>',
-        to: ['info@cpmmllc.com'],
-        reply_to: d.email || 'info@cpmmllc.com',
-        subject: 'New Inquiry — ' + (d.service || 'CPMM Website') + ' · ' + (d.practice || d.first_name || 'New Contact'),
-        html: htmlBody
-      })
+      body: JSON.stringify(payload)
     });
 
-    if (res.ok) {
+    const result = await res.json();
+
+    if (res.ok && result.success) {
       form.style.display = 'none';
       document.getElementById('form-success').style.display = 'block';
     } else {
-      const err = await res.json();
-      console.error('Resend error:', err);
+      console.error('Web3Forms error:', result);
       btn.disabled = false;
-      btn.textContent = 'Submit Inquiry';
+      btn.textContent = 'Request a Claims Review';
       alert('There was a problem sending your message. Please email us directly at info@cpmmllc.com or call (888) 441-1024.');
     }
   } catch (err) {
     console.error('Network error:', err);
     btn.disabled = false;
-    btn.textContent = 'Submit Inquiry';
+    btn.textContent = 'Request a Claims Review';
     alert('There was a problem sending your message. Please email us directly at info@cpmmllc.com or call (888) 441-1024.');
   }
 }
