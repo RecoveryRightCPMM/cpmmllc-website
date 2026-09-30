@@ -237,9 +237,9 @@ window.CPMM = {
     call60:        "https://www.paypal.com/ncp/payment/HJ92W6AJMDD36",   // $275 Follow-up Call, 60 minutes
     eobReview:     "https://www.paypal.com/ncp/payment/KTKA5YXYRG9JC"    // $295 EOB/ERA & Claim Analysis
   },
-  // Web address that receives form submissions (the service that sends them to info@cpmmllc.com).
+  // Web3Forms access key. Form submissions are emailed to info@cpmmllc.com through Web3Forms.
   // Leave blank ("") and forms open the visitor's email program with the details filled in.
-  formEndpoint: "",
+  web3formsKey: "cd61c574-ec2e-417c-824c-2799e3d7dfb6",
   email: "info@cpmmllc.com"
 };
 </script>
@@ -991,11 +991,13 @@ window.CPMM = {
       var bad=Array.prototype.find.call(form.elements,function(el){return el.required&&!el.checkValidity();});
       if(bad){show(form,'Please complete the required fields marked with * and check the boxes before submitting.',false);bad.focus();return;}
       var subject=form.getAttribute('data-subject'), rows=collect(form);
-      if(C.formEndpoint){
-        var data={subject:subject,fields:{}}; rows.forEach(function(r){data.fields[r[0]]=r[1];});
+      if(C.web3formsKey){
+        var data={access_key:C.web3formsKey,subject:'CPMM Website: '+subject,from_name:'CPMM Website'};
+        rows.forEach(function(r){data[r[0]]=r[1]; if(r[0]==='Email')data.email=r[1];});
         var b=form.querySelector('button[type=submit]'); b.disabled=true;
-        fetch(C.formEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
-          .then(function(r){if(!r.ok)throw 0;form.reset();show(form,'Thank you. Your submission was received. We respond within one business day.',true);})
+        fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)})
+          .then(function(r){return r.json();})
+          .then(function(j){if(!j||!j.success)throw 0;form.reset();show(form,'Thank you. Your submission was received. We respond within one business day.',true);})
           .catch(function(){show(form,'Your submission could not be sent. Please email '+C.email+'.',false);})
           .then(function(){b.disabled=false;});
       } else {
